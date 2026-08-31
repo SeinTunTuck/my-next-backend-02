@@ -29,15 +29,12 @@ export async function POST(request) {
 
     const client = await getClientPromise();
     const db = client.db(process.env.DB_NAME);
-    const now = new Date();
     const insertResult = await db.collection("item").insertOne({
       name,
       category,
       price,
       amount,
       status: "ACTIVE",
-      createdAt: now,
-      updatedAt: now,
     });
     return successResponse(
       {
