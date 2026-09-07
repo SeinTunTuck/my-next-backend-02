@@ -15,12 +15,10 @@ export async function GET(_request, { params }) {
   try {
     const client = await getClientPromise();
     const db = client.db(process.env.DB_NAME);
-    const item = await db
-      .collection("item")
-      .findOne({
-        _id: new ObjectId(item_id),
-        status: { $ne: "DELETED" },
-      });
+    const item = await db.collection("item").findOne({
+      _id: new ObjectId(item_id),
+      status: { $ne: "DELETED" },
+    });
     if (item) {
       return successResponse(
         {
@@ -53,8 +51,6 @@ export async function DELETE(_request, { params }) {
       {
         $set: {
           status: "DELETED",
-          deletedAt: new Date(),
-          updatedAt: new Date(),
         },
       },
     );
@@ -93,7 +89,6 @@ export async function PUT(request, { params }) {
           amount: data.amount,
           category: data.category,
           status: "ACTIVE",
-          updatedAt: new Date(),
         },
       },
     );
