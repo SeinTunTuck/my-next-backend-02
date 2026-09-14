@@ -2,7 +2,7 @@
 
 import { NextResponse } from "next/server";
 import { verifyJWT } from "./lib/auth";
-import corsHeaders from "./lib/cors";
+import { getCorsHeaders } from "./lib/cors";
 import {
   X_HEADER_USER_EMAIL,
   X_HEADER_USER_ID,
@@ -18,7 +18,7 @@ export function proxy(request) {
       },
       {
         status: 401,
-        headers: corsHeaders,
+        headers: getCorsHeaders(request),
       },
     );
   }
