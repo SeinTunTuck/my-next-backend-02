@@ -1,6 +1,6 @@
 //src/app/api/auth/login/route.js
 
-import corsHeaders from "@/lib/cors";
+import { getCorsHeaders } from "@/lib/cors";
 import { getClientPromise } from "@/lib/mongodb";
 import { errorResponse } from "@/lib/utils";
 import bcrypt from "bcrypt";
@@ -12,10 +12,10 @@ const adminUser = process.env.ADMIN_USER;
 const adminPass = process.env.ADMIN_PASS;
 const DB_NAME = process.env.DB_NAME;
 
-export async function OPTIONS() {
+export async function OPTIONS(req) {
   return new NextResponse(null, {
     status: 204,
-    headers: corsHeaders,
+    headers: getCorsHeaders(req),
   });
 }
 
@@ -23,7 +23,7 @@ export async function POST(req) {
   const data = await req.json();
   const { email, password } = data;
   if (!email || !password) {
-    return errorResponse("Missing email or password", 400);
+    return errorResponse("Missing email or password", 400, req);
   }
 
   const admin = checkAdmin(email, password);
@@ -39,7 +39,7 @@ export async function POST(req) {
       },
       {
         status: 200,
-        headers: corsHeaders,
+        headers: getCorsHeaders(req),
       },
     );
     response.cookies.set("token", token, {
@@ -51,7 +51,7 @@ export async function POST(req) {
     });
     return response;
   } else {
-    return errorResponse("Invalid email or password", 401);
+    return errorResponse("Invalid email or password", 401, req);
   }
 }
 

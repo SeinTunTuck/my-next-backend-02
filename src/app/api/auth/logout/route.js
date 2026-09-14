@@ -1,23 +1,23 @@
 //src/app/api/auth/logout/route.js
 
-import corsHeaders from "@/lib/cors";
+import { getCorsHeaders } from "@/lib/cors";
 import { NextResponse } from "next/server";
 
-export async function OPTIONS() {
+export async function OPTIONS(request) {
   return new NextResponse(null, {
     status: 204,
-    headers: corsHeaders,
+    headers: getCorsHeaders(request),
   });
 }
 
-export async function GET() {
+export async function GET(request) {
   const response = NextResponse.json(
     {
       message: "Logout successful",
     },
     {
       status: 200,
-      headers: corsHeaders,
+      headers: getCorsHeaders(request),
     },
   );
   response.cookies.set("token", "", {

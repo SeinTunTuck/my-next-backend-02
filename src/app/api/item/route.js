@@ -1,10 +1,10 @@
 // src/app/api/item/route.js
 
-import corsHeaders from "@/lib/cors";
+import { getCorsHeaders } from "@/lib/cors";
 import { getClientPromise } from "@/lib/mongodb";
 import { errorResponse, printExceptionLog, successResponse } from "@/lib/utils";
 
-export async function GET() {
+export async function GET(request) {
   try {
     const client = await getClientPromise();
     const db = client.db(process.env.DB_NAME);
@@ -12,10 +12,10 @@ export async function GET() {
       .collection("item")
       .find({ status: { $ne: "DELETED" } })
       .toArray();
-    return successResponse({ itemList }, 200);
+    return successResponse({ itemList }, 200, request);
   } catch (error) {
     printExceptionLog("GET Items", error);
-    return errorResponse("GET Item Internal Error", 500);
+    return errorResponse("GET Item Internal Error", 500, request);
   }
 }
 
@@ -41,16 +41,17 @@ export async function POST(request) {
         id: insertResult.insertedId,
       },
       201,
+      request,
     );
   } catch (error) {
     printExceptionLog("POST Items", error);
-    return errorResponse("POST Item Internal Error", 500);
+    return errorResponse("POST Item Internal Error", 500, request);
   }
 }
 
-export async function OPTIONS() {
+export async function OPTIONS(request) {
   return new Response(null, {
     status: 204,
-    headers: corsHeaders,
+    headers: getCorsHeaders(request),
   });
 }
