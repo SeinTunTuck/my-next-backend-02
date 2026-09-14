@@ -1,15 +1,23 @@
 //src/app/api/user/route.js
 
-import corsHeaders from "@/lib/cors";
+import { getCorsHeaders } from "@/lib/cors";
 import { getClientPromise } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { isAdmin } from "@/lib/auth";
 import { errorResponse, successResponse } from "@/lib/utils";
+import { ObjectId } from "mongodb";
+
+export async function OPTIONS(request) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: getCorsHeaders(request),
+  });
+}
 
 export async function GET(request) {
   if (!isAdmin(request)) {
-    return errorResponse("Unauthorized Request", 403);
+    return errorResponse("Unauthorized Request", 403, request);
   }
 
   const searchParams = request.nextUrl.searchParams;
@@ -33,17 +41,17 @@ export async function GET(request) {
       page: page,
       size: size,
     };
-    return successResponse(output, 201);
+    return successResponse(output, 200, request);
   } catch (error) {
     console.log("==>GET user exception");
     console.log(error);
+    return errorResponse("GET User Internal Error", 500, request);
   }
-  return NextResponse.json({});
 }
 
 export async function POST(request) {
   if (!isAdmin(request)) {
-    return errorResponse("Unauthorized Request", 403);
+    return errorResponse("Unauthorized Request", 403, request);
   }
   const data = await request.json();
   const username = data.username;
@@ -52,7 +60,7 @@ export async function POST(request) {
   const firstname = data.firstname;
   const lastname = data.lastname;
   if (!username || !email || !password) {
-    return errorResponse("Missing mandatory data", 400);
+    return errorResponse("Missing mandatory data", 400, request);
   }
 
   try {
@@ -67,7 +75,7 @@ export async function POST(request) {
       status: "ACTIVE",
     });
     console.log("==>Insert User Result:", result);
-    return successResponse({ id: result.insertedId }, 200);
+    return successResponse({ id: result.insertedId }, 200, request);
   } catch (error) {
     console.log("==>POST user exception");
     const errorResponseMessage = error.errorResponse.errmsg;
@@ -90,8 +98,55 @@ export async function POST(request) {
       },
       {
         status: 400,
-        headers: corsHeaders,
+        headers: getCorsHeaders(request),
       },
     );
+  }
+}
+
+export async function PUT(request) {
+  if (!isAdmin(request)) {
+    return errorResponse("Unauthorized Request", 403, request);
+  }
+
+  const data = await request.json();
+  const userId = data.userId;
+  const password = data.password;
+
+  if (!userId || !password) {
+    return errorResponse("Missing user ID or password", 400, request);
+  }
+
+  if (!ObjectId.isValid(userId)) {
+    return errorResponse("Invalid user ID", 400, request);
+  }
+
+  try {
+    const client = await getClientPromise();
+    const db = client.db(process.env.DB_NAME);
+    const updateResult = await db.collection("user").updateOne(
+      {
+        _id: new ObjectId(userId),
+      },
+      {
+        $set: {
+          password: await bcrypt.hash(password, 12),
+        },
+      },
+    );
+
+    if (updateResult.matchedCount === 0) {
+      return errorResponse("User not found", 404, request);
+    }
+
+    return successResponse(
+      { message: "Password changed successfully" },
+      200,
+      request,
+    );
+  } catch (error) {
+    console.log("==>PUT user exception");
+    console.log(error);
+    return errorResponse("PUT User Internal Error", 500, request);
   }
 }
