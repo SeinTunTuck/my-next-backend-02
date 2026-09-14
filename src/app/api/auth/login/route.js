@@ -12,6 +12,13 @@ const adminUser = process.env.ADMIN_USER;
 const adminPass = process.env.ADMIN_PASS;
 const DB_NAME = process.env.DB_NAME;
 
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders,
+  });
+}
+
 export async function POST(req) {
   const data = await req.json();
   const { email, password } = data;
